@@ -1,0 +1,81 @@
+namespace xiangshan.v1;
+
+enum Subtype : byte {
+  Country = 0,
+  Dependency = 1,
+  MacroRegion = 2,
+  Region = 3,
+  MacroCounty = 4,
+  County = 5,
+  LocalAdmin = 6,
+  Locality = 7,
+}
+
+struct BBox {
+  xmin: float32;
+  xmax: float32;
+  ymin: float32;
+  ymax: float32;
+}
+
+table Ring {
+  coords: [float32] (required);
+}
+
+table Polygon {
+  exterior: Ring (required);
+  holes: [Ring];
+}
+
+table Division {
+  id: string (required);
+  division_id: string;
+  name: string (required);
+  subtype: Subtype;
+  admin_level: int8;
+  country: string;
+  region: string;
+  parent_id: string;
+  bbox: BBox (required);
+  polygons: [Polygon] (required);
+  names_common: string;
+  class: string;
+  wikidata: string;
+  population: int32;
+  driving_side: string;
+  local_type: string;
+}
+
+table GridCell {
+  lng: int16;
+  lat: int16;
+  indices: [uint32];
+}
+
+table GridIndex {
+  cells: [GridCell] (required);
+  version: string;
+}
+
+table PreindexCell {
+  lng: int16;
+  lat: int16;
+  index: uint32;
+}
+
+table Preindex {
+  cells: [PreindexCell] (required);
+  version: string;
+}
+
+table Divisions {
+  items: [Division] (required);
+  grid_coarse: GridIndex (required);
+  grid_fine: GridIndex (required);
+  country_preindex: Preindex;
+  version: string;
+  source: string;
+}
+
+root_type Divisions;
+file_identifier "XSFB";

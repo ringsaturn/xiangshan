@@ -1,0 +1,44 @@
+include "xiangshan.fbs";
+
+namespace xiangshan.v1;
+
+table CompressedRing {
+  data: [ubyte] (required);
+  point_count: uint32;
+}
+
+table CompressedPolygon {
+  exterior: CompressedRing (required);
+  holes: [CompressedRing];
+}
+
+table CompressedDivision {
+  id: string (required);
+  division_id: string;
+  name: string (required);
+  subtype: Subtype;
+  admin_level: int8;
+  country: string;
+  region: string;
+  parent_id: string;
+  bbox: BBox (required);
+  polygons: [CompressedPolygon] (required);
+  names_common: string;
+  class: string;
+  wikidata: string;
+  population: int32;
+  driving_side: string;
+  local_type: string;
+}
+
+table CompressedDivisions {
+  items: [CompressedDivision] (required);
+  grid_coarse: GridIndex (required);
+  grid_fine: GridIndex (required);
+  country_preindex: Preindex;
+  version: string;
+  source: string;
+}
+
+root_type CompressedDivisions;
+file_identifier "XSCF";
