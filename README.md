@@ -14,6 +14,10 @@ Download prebuilt data from(No reliablity guarantee, consider building from sour
 Under ODbL license
 © OpenStreetMap contributors, Overture Maps Foundation
 https://dataset.ringsaturn.me/xiangshan/divisions.cf.bin
+
+Build for low memory environments(AWS Lambda, Cloudflare Workers, etc), based on 2026-04-15.0 OvertureMaps data:
+https://dataset.ringsaturn.me/xiangshan/divisions.xs-poly
+https://dataset.ringsaturn.me/xiangshan/divisions.xs-index.gz
 ```
 
 ### Build Data
