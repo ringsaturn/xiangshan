@@ -1,0 +1,40 @@
+include "xiangshan.fbs";
+
+namespace xiangshan.v1;
+
+// Lightweight division record stored in the remote index file.
+// Contains all metadata needed for grid lookup and bbox pre-filtering,
+// plus the byte range in the polygon slab for on-demand fetching.
+table RemoteDivisionMeta {
+  id: string (required);
+  division_id: string;
+  name: string (required);
+  subtype: Subtype;
+  admin_level: int8;
+  country: string;
+  region: string;
+  parent_id: string;
+  bbox: BBox (required);
+  names_common: string;
+  class: string;
+  wikidata: string;
+  population: int32;
+  driving_side: string;
+  local_type: string;
+  poly_offset: uint64;
+  poly_length: uint32;
+}
+
+// Root table for the remote index file (.xs-index).
+// Loaded fully at cold start; polygon slab fetched on demand via Range requests.
+table RemoteIndex {
+  items: [RemoteDivisionMeta] (required);
+  grid_coarse: GridIndex (required);
+  grid_fine: GridIndex (required);
+  country_preindex: Preindex;
+  version: string;
+  source: string;
+}
+
+root_type RemoteIndex;
+file_identifier "XSRI";

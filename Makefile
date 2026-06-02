@@ -14,12 +14,14 @@ SIMPLIFIED ?= $(BUILD_DIR)/simplified.parquet
 TOPO_SIMPLIFIED ?= $(BUILD_DIR)/topo-simplified.parquet
 DIVISIONS_BIN ?= $(BUILD_DIR)/divisions.bin
 DIVISIONS_CF_BIN ?= $(BUILD_DIR)/divisions.cf.bin
+REMOTE_INDEX ?= $(BUILD_DIR)/divisions.xs-index.gz
+REMOTE_SLAB  ?= $(BUILD_DIR)/divisions.xs-poly
 SCHEMA ?= schema/xiangshan.fbs
 COMPRESSED_SCHEMA ?= schema/xiangshan_compressed.fbs
 PUBLIC_CMD_TOOLS := xs-query xs-serve
 PUBLIC_CMD_BINS := $(addprefix $(DIST_DIR)/,$(PUBLIC_CMD_TOOLS))
 
-.PHONY: all pipeline extract simplify topo-simplify encode compress dist build-cmds generate test bench query serve verify stats stats-extract stats-simplify stats-topo-simplify stats-bin clean dep-licenses help FORCE
+.PHONY: all pipeline extract simplify topo-simplify encode compress remote-split dist build-cmds generate test bench query serve verify stats stats-extract stats-simplify stats-topo-simplify stats-bin clean dep-licenses help FORCE
 
 all: pipeline
 
@@ -57,6 +59,15 @@ compress: $(DIVISIONS_CF_BIN)
 
 $(DIVISIONS_CF_BIN): $(DIVISIONS_BIN)
 	$(GO) run ./internal/cmd/xs-compress -input $(DIVISIONS_BIN) -output $(DIVISIONS_CF_BIN)
+
+remote-split: $(REMOTE_INDEX)
+
+$(REMOTE_INDEX): $(DIVISIONS_CF_BIN)
+	$(GO) run ./internal/cmd/xs-remote-split \
+		-input $(DIVISIONS_CF_BIN) \
+		-index $(REMOTE_INDEX) \
+		-slab $(REMOTE_SLAB) \
+		--compress
 
 dist: build-cmds
 
@@ -97,6 +108,7 @@ stats-topo-simplify: $(TOPO_SIMPLIFIED)
 
 stats-bin: $(DIVISIONS_BIN) $(DIVISIONS_CF_BIN)
 	ls -lh $(EXTRACTED) $(DIVISIONS_BIN) $(DIVISIONS_CF_BIN)
+	@if [ -f $(REMOTE_INDEX) ]; then ls -lh $(REMOTE_INDEX) $(REMOTE_SLAB); fi
 	python3 -c 'from pathlib import Path; p = Path("$(DIVISIONS_BIN)"); b = p.read_bytes()[:12]; print("divisions_bin_bytes", p.stat().st_size); print("size_prefix_hex", b[:4].hex()); print("identifier", b[8:12].decode("ascii", "replace"))'
 
 clean:
@@ -116,6 +128,7 @@ help:
 	@echo "  make topo-simplify  Build $(TOPO_SIMPLIFIED)"
 	@echo "  make encode         Build $(DIVISIONS_BIN) from $(SIMPLIFIED)"
 	@echo "  make compress       Build $(DIVISIONS_CF_BIN)"
+	@echo "  make remote-split   Build $(REMOTE_INDEX) + $(REMOTE_SLAB) for remote finder"
 	@echo "  make dist           Build public cmd tools into $(DIST_DIR)"
 	@echo "  make stats          Print extract and binary stats"
 	@echo "  make test           Run go test ./..."
